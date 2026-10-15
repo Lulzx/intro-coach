@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intro Coach</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Intro Coach</div>
+    <div class="top-actions">
+      <button id="historyBtn" class="ghost">History</button>
+      <button id="settingsBtn" class="ghost icon" aria-label="Settings" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card practice" aria-labelledby="practiceTitle">
+    <h1 id="practiceTitle" class="sr-only">Practise</h1>
+    <div class="practice-grid">
+      <div class="practice-main">
+        <div class="chips" id="scenarios" role="radiogroup" aria-label="Situation"></div>
+        <blockquote class="prompt" id="prompt">Tell me about yourself.</blockquote>
+        <div class="target-row">
+          <label for="target">Aim for <strong id="targetVal">75s</strong></label>
+          <input type="range" id="target" min="15" max="150" step="5" value="75">
+        </div>
+
+        <div class="notes">
+          <label class="notes-label" for="notes">Your key points</label>
+          <textarea id="notes" rows="3" placeholder="e.g. Product designer · 5 yrs in healthcare · led the mobile app redesign · booking time down 40% · looking for a senior role"></textarea>
+          <div class="muted small">Stays in this browser. Sent to the AI coach only when you ask for content feedback.</div>
+        </div>
+
+        <div class="recorder">
+          <button id="recBtn" class="rec" aria-label="Start recording"><span class="dot"></span></button>
+          <div class="rec-info">
+            <div class="timer"><span id="timer">0:00</span> <span class="muted" id="timerTarget">/ 1:15</span></div>
+            <div class="progress" aria-hidden="true"><div id="progressBar"></div><div class="tick" id="targetTick"></div></div>
+            <div class="meter" aria-hidden="true"><div id="meterBar"></div></div>
+          </div>
+        </div>
+        <div class="upload-row">
+          <span class="muted small" id="recHint">Press <kbd>Space</kbd> to record, or drop a file on this card.</span>
+          <button id="uploadBtn" class="ghost upload">Upload audio file</button>
+          <input type="file" id="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.webm,.ogg,.flac,.aac,.mp4,.mov" hidden>
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+
+      <aside class="shape" aria-labelledby="shapeTitle">
+        <div class="eyebrow">A shape that works</div>
+        <h2 id="shapeTitle"></h2>
+        <ol id="shapeSteps"></ol>
+        <p class="land" id="shapeLand"></p>
+      </aside>
+    </div>
+    <div class="drop" id="drop" hidden><div>Drop your recording to analyse it</div></div>
+  </section>
+
+  <section id="results" class="results" hidden>
+    <div class="card score-card">
+      <div class="score-main">
+        <div class="score-num" id="overall">-</div>
+        <div>
+          <div class="score-label" id="overallLabel"></div>
+          <div class="muted small" id="overallDelta"></div>
+        </div>
+      </div>
+      <div class="subscores" id="subscores"></div>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Timeline</h2>
+        <audio id="player" controls preload="auto"></audio>
+      </div>
+      <div class="legend" id="legend">
+        <span><i class="sw line"></i>Pitch, semitones from your median</span>
+        <span><i class="sw band-ok"></i>Pause at a full stop or comma</span>
+        <span><i class="sw band-bad"></i>Pause mid-thought</span>
+        <span><i class="sw tri">▲</i>Statement ending on a rise</span>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <svg id="chart" role="img" aria-label="Pitch contour with pauses over time"></svg>
+        <div class="tooltip" id="tooltip" hidden></div>
+      </div>
+      <div class="transcript-wrap">
+        <h3>Transcript <span class="muted small">click a word to hear it</span></h3>
+        <p class="transcript" id="transcript"></p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Work on</h2>
+        <ol class="tips" id="tips"></ol>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>Structure</h2>
+          <ul class="checklist" id="structure"></ul>
+        </div>
+        <div class="card">
+          <h2>Keep doing</h2>
+          <ul class="strengths" id="strengths"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="insightsCard" hidden>
+      <h2>Insights <span class="muted small">from the words you chose and how you said them</span></h2>
+      <div class="insight-grid" id="insights"></div>
+    </div>
+
+    <div class="card ai" id="aiCard" hidden>
+      <div class="card-head">
+        <h2>Content coaching <span class="muted small" id="aiLabel"></span></h2>
+        <button id="aiBtn">Get content feedback and a rewrite</button>
+      </div>
+      <div id="aiOut"></div>
+    </div>
+    <p class="muted small foot" id="foot"></p>
+  </section>
+</main>
+
+<aside id="history" class="drawer" hidden aria-label="Past takes">
+  <div class="card-head"><h2>Your takes</h2><button id="historyClose" class="ghost" aria-label="Close">✕</button></div>
+  <svg id="trend" class="trend" aria-label="Score trend"></svg>
+  <ul id="takes"></ul>
+</aside>
+
+<aside id="settings" class="drawer" hidden aria-label="Settings">
+  <div class="card-head"><h2>Settings</h2><button id="settingsClose" class="ghost" aria-label="Close">✕</button></div>
+  <section class="setting">
+    <h3>OpenRouter API key</h3>
+    <p class="muted small">Turns on content feedback and the rewritten intro, using <span id="orModel">Nemotron</span>.
+      Get a free key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>.</p>
+    <div id="keyState" class="key-state"></div>
+    <form id="keyForm" class="key-form" autocomplete="off">
+      <div class="key-input">
+        <input type="password" id="keyInput" placeholder="sk-or-v1-…" spellcheck="false" aria-label="OpenRouter API key">
+        <button type="button" id="keyShow" class="ghost">Show</button>
+      </div>
+      <button type="submit" id="keySave">Save key</button>
+    </form>
+    <div id="keyMsg" class="status" role="status" aria-live="polite"></div>
+    <p class="muted small">Saved on this computer in <code>~/.intro-coach/settings.json</code>. Only your transcript and scores go to OpenRouter, never your audio.</p>
+  </section>
+</aside>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

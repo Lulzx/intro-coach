@@ -1,0 +1,22 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# tool caches
+.pytest_cache/
+.ruff_cache/
+
+# local data: models, recordings and settings live in ~/.intro-coach, but keep any local copies out
+models/
+takes/
+settings.json
+.env
+*.wav
+*.m4a
+*.webm
+
+.DS_Store
