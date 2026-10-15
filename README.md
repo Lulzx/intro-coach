@@ -39,14 +39,17 @@ onnxruntime-web, a Praat-style pitch tracker, and structure checks with compromi
 [models.dev](https://models.dev) through the [AI SDK](https://ai-sdk.dev), the same building blocks as opencode;
 add a key under Settings.
 
-The first launch downloads the speech model (290 MB). macOS builds aren't notarized yet: right-click the app and
-choose Open the first time.
+On macOS 15+ the app runs the Core ML build of the speech model on the Neural Engine (a 2-minute take transcribes
+in about half a second) through a small Swift helper in `desktop/native/coreml-asr`; elsewhere it uses the ONNX
+build in WebAssembly. The first launch downloads the model (about 250-290 MB). macOS builds aren't notarized yet:
+right-click the app and choose Open the first time.
 
 Build it yourself (needs Node and Rust):
 
 ```sh
 cd desktop
 npm install
+bash scripts/build-native.sh   # macOS: build the Core ML helper (needs Xcode command line tools)
 npm run tauri dev      # or: npm run tauri build
 npm test               # structure checks against the labelled intros
 ```

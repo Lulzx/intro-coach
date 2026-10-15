@@ -216,16 +216,36 @@ function intensity(wav: Float32Array, rate: number, minPitch: number, times: (i:
 
 // ---------------------------------------------------------------- analysis entry point
 
+/** Halve the sample rate with a short low-pass FIR (pitch lives far below 4 kHz; Praat also downsamples). */
+function decimate2(x: Float32Array): Float32Array {
+  const h = [-0.0106, 0, 0.0329, 0, -0.0890, 0, 0.3126, 0.5, 0.3126, 0, -0.0890, 0, 0.0329, 0, -0.0106];
+  const half = h.length >> 1;
+  const out = new Float32Array(x.length >> 1);
+  for (let i = 0; i < out.length; i++) {
+    let acc = 0;
+    const c = 2 * i;
+    for (let k = 0; k < h.length; k++) {
+      const j = c + k - half;
+      if (j >= 0 && j < x.length) acc += h[k] * x[j];
+    }
+    out[i] = acc;
+  }
+  return out;
+}
+
 export function analyse(wav: Float32Array, rate = 16000): Prosody {
+  // pitch is tracked at half the rate: four times less autocorrelation work, same contour
+  const low = rate >= 16000 ? decimate2(wav) : wav;
+  const lowRate = rate >= 16000 ? rate / 2 : rate;
   // Two-pass pitch range (De Looze & Hirst): a wide first pass, then a range fitted to this speaker
-  const first = pitchAC(wav, rate, 60, 600).f0;
+  const first = pitchAC(low, lowRate, 60, 600).f0;
   const v = Array.from(first).filter((x) => x > 0);
   let floor = 60, ceiling = 600;
   if (v.length > 20) {
     floor = Math.max(50, 0.75 * percentile(v, 15));
     ceiling = Math.min(700, 1.5 * percentile(v, 85));
   }
-  const { t0, f0 } = pitchAC(wav, rate, floor, ceiling);
+  const { t0, f0 } = pitchAC(low, lowRate, floor, ceiling);
   const n = f0.length;
   const db = intensity(wav, rate, Math.max(floor, 75), (i) => t0 + i * STEP, n);
 

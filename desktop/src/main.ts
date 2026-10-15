@@ -5,7 +5,7 @@ import { SCENARIOS } from "./engine/scenarios";
 import type { Report } from "./engine/analysis";
 import * as store from "./store";
 import * as ai from "./ai";
-import { appFetch, decodeAudio, ensureModel, isTauri, readModel } from "./platform";
+import { appFetch, decodeAudio, ensureModel, isMac, isTauri, readModel, startNative, transcribeNative } from "./platform";
 import AnalysisWorker from "./worker?worker";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -44,6 +44,7 @@ const worker = new AnalysisWorker();
 let nextId = 1;
 const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void; onProgress?: (stage: string, p: number) => void }>();
 let backend = "";
+let mode: "coreml" | "onnx" = "onnx";
 let modelReady: Promise<void>;
 
 worker.onmessage = (e: MessageEvent) => {
@@ -62,7 +63,21 @@ function startModel(): Promise<void> {
     chip.hidden = false;
     chip.replaceChildren(el("span", {}, text), ...(p === undefined ? [] : [el("div", { class: "bar" }, el("div", { style: `width:${Math.round(p * 100)}%` }))]));
   };
+  const progress = (label: string) => (loaded: number, total: number) => {
+    if (total > 1 && loaded < total) show(`Downloading the speech model (${label}, first run): ${(loaded / 1e6).toFixed(0)} of ${(total / 1e6).toFixed(0)} MB`, loaded / total);
+  };
   return (async () => {
+    if (isTauri && isMac) {
+      try {
+        await startNative(progress("Core ML"));
+        mode = "coreml";
+        chip.hidden = true;
+        $("modelInfo").textContent = "Fluid Speech Mini by FluidVoice, running on the Neural Engine (Core ML).";
+        return;
+      } catch (e) {
+        console.warn("Core ML unavailable, using ONNX:", e);
+      }
+    }
     let shown = false;
     await ensureModel((loaded, total) => {
       if (total > 1 && loaded < total) { shown = true; show(`Downloading the speech model (first run): ${(loaded / 1e6).toFixed(0)} of ${(total / 1e6).toFixed(0)} MB`, loaded / total); }
@@ -87,11 +102,14 @@ function startModel(): Promise<void> {
   });
 }
 
-function analyseInWorker(wav: Float32Array, onProgress: (stage: string, p: number) => void): Promise<any> {
+async function analyseInWorker(wav: Float32Array, onProgress: (stage: string, p: number) => void): Promise<any> {
   const id = nextId++;
+  // on macOS the Core ML helper transcribes (Neural Engine); the worker measures the audio and coaches
+  const native = mode === "coreml" ? await transcribeNative(wav) : null;
   return new Promise((resolve, reject) => {
     pending.set(id, { resolve, reject, onProgress });
-    worker.postMessage({ type: "analyse", id, wav, scenario, target }, [wav.buffer]);
+    if (native) worker.postMessage({ type: "analyseWords", id, words: native.words, asr_s: native.ms / 1000, wav, scenario, target }, [wav.buffer]);
+    else worker.postMessage({ type: "analyse", id, wav, scenario, target }, [wav.buffer]);
   });
 }
 
@@ -136,6 +154,26 @@ async function init() {
   modelReady.catch(() => { /* shown in the chip; retried on the next take */ });
   await loadTakes();
   loadCatalog();
+  if (isTauri) selfTest();
+}
+
+/** INTRO_COACH_SELFTEST=<file>: analyse it through the real pipeline, report and quit (see lib.rs). */
+async function selfTest() {
+  const { invoke } = await import("@tauri-apps/api/core");
+  let bytes: ArrayBuffer;
+  try { bytes = await invoke<ArrayBuffer>("selftest_file"); } catch { return; }
+  const t = performance.now();
+  let summary: Record<string, unknown>;
+  try {
+    await modelReady;
+    await submit(new Blob([bytes]), "self-test");
+    summary = { ok: !!report && !report.empty, mode, backend, isolated: crossOriginIsolated, mic: !!navigator.mediaDevices?.getUserMedia,
+      seconds: Math.round(performance.now() - t) / 1000, timing: report?.timing, overall: report?.overall, transcript: report?.transcript?.slice(0, 120),
+      status: $("status").textContent };
+  } catch (e) {
+    summary = { ok: false, error: (e as Error).message };
+  }
+  await invoke("selftest_done", { summary: JSON.stringify(summary) });
 }
 
 function pickScenario(id: string, initial = false) {
@@ -156,51 +194,125 @@ function setTarget(v: number) {
 
 // ---------------------------------------------------------------- recording
 
-let rec: MediaRecorder | null = null;
+// Raw PCM capture through an AudioWorklet. A microphone that has just been opened (or just been granted on macOS)
+// delivers pure digital silence for a few seconds; the take only starts once real sound arrives, so nothing the
+// speaker says is lost and the timer doesn't run on dead air.
+const CAPTURE_WORKLET = `registerProcessor("capture", class extends AudioWorkletProcessor {
+  process(inputs) { const ch = inputs[0] && inputs[0][0]; if (ch) this.port.postMessage(ch.slice(0)); return true; }
+});`;
+
+interface Rec { stop: () => void }
+let rec: Rec | null = null;
+
 async function toggleRecording() {
   if (rec) return rec.stop();
+  // created inside the click so the platform lets it start running
+  const ctx = new AudioContext();
+  ctx.resume();
   let stream: MediaStream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
   } catch (e) {
+    ctx.close();
     return status(`Microphone unavailable: ${(e as Error).message}`, true);
   }
-  const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((m) => MediaRecorder.isTypeSupported(m)) || "";
-  const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-  const chunks: Blob[] = [];
-  const ctx = new AudioContext();
-  const analyser = ctx.createAnalyser();
-  analyser.fftSize = 1024;
-  ctx.createMediaStreamSource(stream).connect(analyser);
-  const buf = new Float32Array(analyser.fftSize);
-  const started = performance.now();
-  let raf = 0;
+  const url = URL.createObjectURL(new Blob([CAPTURE_WORKLET], { type: "text/javascript" }));
+  await ctx.audioWorklet.addModule(url);
+  URL.revokeObjectURL(url);
+  await ctx.resume();
+  const source = ctx.createMediaStreamSource(stream);
+  const node = new AudioWorkletNode(ctx, "capture");
+  const mute = ctx.createGain();
+  mute.gain.value = 0;
+  source.connect(node).connect(mute).connect(ctx.destination); // keeps the graph pulling audio without playing it
+
+  const chunks: Float32Array[] = [];
+  let live = false, started = 0, level = 0, raf = 0;
+  const opened = performance.now();
+  status("Starting the microphone...");
+  $("recBtn").classList.add("on"); $("recBtn").setAttribute("aria-label", "Stop recording");
+  ($("progressBar").parentElement!.querySelector(".tick") as HTMLElement).style.left = `${100 / 1.5}%`;
+
+  node.port.onmessage = (e: MessageEvent<Float32Array>) => {
+    const ch = e.data;
+    let peak = 0, sum = 0;
+    for (let i = 0; i < ch.length; i++) { const a = Math.abs(ch[i]); if (a > peak) peak = a; sum += ch[i] * ch[i]; }
+    level = Math.sqrt(sum / ch.length);
+    if (!live) {
+      // a live microphone always has some noise; exact zeros mean the device isn't delivering yet
+      if (peak < 1e-6) return;
+      live = true;
+      started = performance.now();
+      status(`Recording. Answer: “${SCENARIOS[scenario].prompt}”`);
+    }
+    chunks.push(ch);
+  };
+
   const tick = () => {
-    const s = (performance.now() - started) / 1000;
-    $("timer").textContent = fmt(s);
-    // the bar spans 1.5x the target so going over is visible; the tick marks the target itself
-    $("progressBar").style.width = Math.min(100, (s / (target * 1.5)) * 100) + "%";
-    $("progressBar").parentElement!.classList.toggle("over", s > target);
-    analyser.getFloatTimeDomainData(buf);
-    let sum = 0; for (const x of buf) sum += x * x;
-    const db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9);
+    if (live) {
+      const s = (performance.now() - started) / 1000;
+      $("timer").textContent = fmt(s);
+      // the bar spans 1.5x the target so going over is visible; the tick marks the target itself
+      $("progressBar").style.width = Math.min(100, (s / (target * 1.5)) * 100) + "%";
+      $("progressBar").parentElement!.classList.toggle("over", s > target);
+    } else if (performance.now() - opened > 10000) {
+      finish(false);
+      return status("The microphone didn't send any sound. Check the input device in your system settings.", true);
+    }
+    const db = 20 * Math.log10(level + 1e-9);
     $("meterBar").style.width = Math.max(0, Math.min(100, (db + 60) * 2)) + "%";
     raf = requestAnimationFrame(tick);
   };
-  mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-  mr.onstop = () => {
-    cancelAnimationFrame(raf); stream.getTracks().forEach((t) => t.stop()); ctx.close();
+
+  const finish = (keep: boolean) => {
+    cancelAnimationFrame(raf);
+    node.port.onmessage = null;
+    source.disconnect(); node.disconnect();
+    stream.getTracks().forEach((t) => t.stop());
+    const rate = ctx.sampleRate;
+    ctx.close();
     rec = null; $("recBtn").classList.remove("on"); $("recBtn").setAttribute("aria-label", "Start recording");
     $("meterBar").style.width = "0";
-    if (performance.now() - started < 1500) return status("That was too short. Try again.", true);
-    submit(new Blob(chunks, { type: mr.mimeType }));
+    if (!keep) return;
+    const n = chunks.reduce((a, c) => a + c.length, 0);
+    if (n < rate * 1.5) return status("That was too short. Try again.", true);
+    const pcm = new Float32Array(n);
+    let o = 0;
+    for (const c of chunks) { pcm.set(c, o); o += c.length; }
+    submitPcm(pcm, rate);
   };
-  mr.start(250);
-  rec = mr;
-  $("recBtn").classList.add("on"); $("recBtn").setAttribute("aria-label", "Stop recording");
-  ($("progressBar").parentElement!.querySelector(".tick") as HTMLElement).style.left = `${100 / 1.5}%`;
-  status(`Recording. Answer: “${SCENARIOS[scenario].prompt}”`);
+  rec = { stop: () => finish(true) };
   tick();
+}
+
+/** 16 kHz mono samples from any rate, through the platform's resampler. */
+async function resample(pcm: Float32Array, rate: number, to = 16000): Promise<Float32Array> {
+  if (rate === to) return pcm;
+  const off = new OfflineAudioContext(1, Math.ceil((pcm.length * to) / rate), to);
+  const buf = off.createBuffer(1, pcm.length, rate);
+  buf.copyToChannel(pcm as Float32Array<ArrayBuffer>, 0);
+  const src = off.createBufferSource();
+  src.buffer = buf;
+  src.connect(off.destination);
+  src.start();
+  return (await off.startRendering()).getChannelData(0).slice();
+}
+
+/** 16-bit mono WAV, for playback and history. */
+function wavBlob(pcm: Float32Array, rate: number): Blob {
+  const out = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+  const text = (o: number, s: string) => { for (let i = 0; i < s.length; i++) out.setUint8(o + i, s.charCodeAt(i)); };
+  text(0, "RIFF"); out.setUint32(4, 36 + pcm.length * 2, true); text(8, "WAVE"); text(12, "fmt ");
+  out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true); out.setUint32(24, rate, true);
+  out.setUint32(28, rate * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true); text(36, "data");
+  out.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 0x7fff, true);
+  return new Blob([out.buffer], { type: "audio/wav" });
+}
+
+async function submitPcm(pcm: Float32Array, rate: number) {
+  const wav = await resample(pcm, rate);
+  await submit(wavBlob(wav, 16000), undefined, wav);
 }
 
 function status(msg: string, error = false) {
@@ -233,11 +345,11 @@ function setupDrop() {
   window.addEventListener("drop", (e) => e.preventDefault());
 }
 
-async function submit(blob: Blob, fileLabel?: string) {
+async function submit(blob: Blob, fileLabel?: string, decoded?: Float32Array) {
   $<HTMLButtonElement>("recBtn").disabled = true; $<HTMLButtonElement>("uploadBtn").disabled = true;
   try {
     status(fileLabel ? `Reading ${fileLabel}...` : "Reading your take...");
-    const wav = await decodeAudio(blob);
+    const wav = decoded ?? (await decodeAudio(blob));
     if (wav.length < 8000) throw new Error("the recording is shorter than half a second");
     status("Waiting for the speech model...");
     await (modelReady = modelReady.catch(() => startModel()));

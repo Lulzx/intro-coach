@@ -1,6 +1,6 @@
 // What differs between the Tauri app and a plain browser: HTTP (Tauri's native client has no CORS limits) and
 // where the 290 MB speech model is kept (a file in the app's data folder vs the browser's Cache Storage).
-import { MODEL_FILES, MODEL_REPO, type ModelFile } from "./engine/fluid";
+import { MODEL_FILES, MODEL_REPO, groupPieces, type ModelFile, type Word } from "./engine/fluid";
 
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -29,7 +29,7 @@ export async function ensureModel(onProgress: Progress): Promise<void> {
     const { invoke, Channel } = await import("@tauri-apps/api/core");
     const channel = new Channel<{ loaded: number; total: number }>();
     channel.onmessage = (m) => onProgress(m.loaded, m.total);
-    await invoke("ensure_model", { repo: MODEL_REPO, files: MODEL_FILES, onProgress: channel });
+    await invoke("ensure_model", { repo: MODEL_REPO, files: [...MODEL_FILES], onProgress: channel });
     return;
   }
   const cache = await caches.open(CACHE);
@@ -60,7 +60,7 @@ export async function readModel(): Promise<Record<ModelFile, ArrayBuffer>> {
   const out = {} as Record<ModelFile, ArrayBuffer>;
   if (isTauri) {
     const { invoke } = await import("@tauri-apps/api/core");
-    for (const f of MODEL_FILES) out[f] = await invoke<ArrayBuffer>("read_model_file", { name: f });
+    for (const f of MODEL_FILES) out[f] = await invoke<ArrayBuffer>("read_model_file", { repo: MODEL_REPO, name: f });
     return out;
   }
   const cache = await caches.open(CACHE);
@@ -70,6 +70,30 @@ export async function readModel(): Promise<Record<ModelFile, ArrayBuffer>> {
     out[f] = await res.arrayBuffer();
   }
   return out;
+}
+
+// ---------------------------------------------------------------- Core ML on macOS (Neural Engine)
+
+const COREML_REPO = "FluidVoice-Labs/fluid-speech-mini-coreml";
+const COREML_FILES = ["config.json", "parakeet_vocab.json", ...["Preprocessor", "Encoder", "Decoder", "JointDecision"].flatMap((m) =>
+  ["analytics/coremldata.bin", "coremldata.bin", "metadata.json", "model.mil", "weights/weight.bin"].map((f) => `${m}.mlmodelc/${f}`))];
+export const isMac = /Mac/.test(navigator.userAgent);
+
+/** Download the Core ML model and start the native helper. Throws where Core ML isn't available. */
+export async function startNative(onProgress: Progress): Promise<void> {
+  if (!isTauri || !isMac) throw new Error("Core ML needs the macOS app");
+  const { invoke, Channel } = await import("@tauri-apps/api/core");
+  const channel = new Channel<{ loaded: number; total: number }>();
+  channel.onmessage = (m) => onProgress(m.loaded, m.total);
+  await invoke("ensure_model", { repo: COREML_REPO, files: COREML_FILES, onProgress: channel });
+  await invoke("native_asr_start", { repo: COREML_REPO });
+}
+
+export async function transcribeNative(wav: Float32Array): Promise<{ words: Word[]; ms: number }> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  const bytes = new Uint8Array(wav.buffer, wav.byteOffset, wav.byteLength);
+  const res = await invoke<{ pieces: [string, number, number][]; ms: number }>("native_asr_transcribe", bytes);
+  return { words: groupPieces(res.pieces), ms: res.ms };
 }
 
 /** Decode any recording the platform can play, as 16 kHz mono float samples. */

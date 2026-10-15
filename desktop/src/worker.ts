@@ -1,6 +1,6 @@
 // Runs the whole analysis off the UI thread: speech recognition, pitch and loudness, then the coaching analysis.
 import * as ort from "onnxruntime-web/webgpu";
-import { FluidSpeechMini, type ModelFile } from "./engine/fluid";
+import { FluidSpeechMini, type ModelFile, type Word } from "./engine/fluid";
 import { analyse as prosody } from "./engine/prosody";
 import { analyse } from "./engine/analysis";
 
@@ -13,7 +13,8 @@ let backend = "wasm";
 
 export type Request =
   | { type: "load"; files: Record<ModelFile, ArrayBuffer>; backend?: "auto" | "wasm" | "webgpu" }
-  | { type: "analyse"; id: number; wav: Float32Array; scenario: string; target: number };
+  | { type: "analyse"; id: number; wav: Float32Array; scenario: string; target: number }
+  | { type: "analyseWords"; id: number; words: Word[]; asr_s: number; wav: Float32Array; scenario: string; target: number };
 
 async function load(files: Record<ModelFile, ArrayBuffer>, prefer = "wasm") {
   const read = async (f: ModelFile) => new Uint8Array(files[f]);
@@ -46,6 +47,11 @@ self.onmessage = async (e: MessageEvent<Request>) => {
       self.postMessage({ type: "progress", id: msg.id, stage: "analyse", p: 1 });
       const report = analyse(words, prosody(msg.wav), msg.wav.length / 16000, msg.scenario, msg.target);
       self.postMessage({ type: "result", id: msg.id, report, timing: { asr_s: Math.round(asr * 100) / 100, total_s: Math.round((performance.now() - t) / 10) / 100 }, backend });
+    } else if (msg.type === "analyseWords") {
+      // speech recognition already ran natively (Core ML); measure the audio and coach here
+      const t = performance.now();
+      const report = analyse(msg.words, prosody(msg.wav), msg.wav.length / 16000, msg.scenario, msg.target);
+      self.postMessage({ type: "result", id: msg.id, report, timing: { asr_s: msg.asr_s, total_s: Math.round((msg.asr_s + (performance.now() - t) / 1000) * 100) / 100 }, backend: "coreml" });
     }
   } catch (err) {
     self.postMessage({ type: "error", id: "id" in msg ? msg.id : -1, message: (err as Error).message ?? String(err) });

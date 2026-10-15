@@ -16,10 +16,13 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
+            target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin
           - platform: macos-latest
+            target: x86_64-apple-darwin
             args: --target x86_64-apple-darwin
           - platform: windows-latest
+            target: x86_64-pc-windows-msvc
             args: ""
     runs-on: ${{ matrix.platform }}
     defaults:
@@ -39,6 +42,9 @@ jobs:
         with:
           workspaces: desktop/src-tauri -> target
       - run: npm ci
+      # the Core ML speech helper (Swift) is bundled into the macOS app
+      - if: runner.os == 'macOS'
+        run: bash scripts/build-native.sh ${{ matrix.target }}
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
