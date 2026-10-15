@@ -147,6 +147,39 @@ async fn native_asr_transcribe(app: AppHandle, state: State<'_, NativeAsr>, requ
     reply
 }
 
+fn send(state: &State<'_, NativeAsr>, line: &str) -> Result<serde_json::Value, String> {
+    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+    let native = guard.as_mut().ok_or("the Core ML helper isn't running")?;
+    writeln!(native.stdin, "{line}").map_err(|e| e.to_string())?;
+    native.stdin.flush().map_err(|e| e.to_string())?;
+    read_reply(&mut native.stdout)
+}
+
+/// Native microphone recording on macOS (AVAudioEngine in the helper, no voice processing).
+#[tauri::command]
+async fn native_rec_start(state: State<'_, NativeAsr>) -> Result<serde_json::Value, String> {
+    send(&state, r#"{"cmd":"rec_start"}"#)
+}
+
+#[tauri::command]
+async fn native_rec_level(state: State<'_, NativeAsr>) -> Result<serde_json::Value, String> {
+    send(&state, r#"{"cmd":"rec_level"}"#)
+}
+
+/// Stop recording and return the take as raw 16 kHz mono float32 bytes.
+#[tauri::command]
+async fn native_rec_stop(app: AppHandle, state: State<'_, NativeAsr>) -> Result<Response, String> {
+    let path = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("recording.f32");
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let cmd = serde_json::json!({ "cmd": "rec_stop", "path": path.display().to_string() });
+    send(&state, &cmd.to_string())?;
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_file(&path);
+    Ok(Response::new(bytes))
+}
+
 // ---------------------------------------------------------------- self-test
 // INTRO_COACH_SELFTEST=<audio file> makes the app analyse that file through the real pipeline, print a summary
 // and quit. Used to check a build end to end without clicking through the window.
@@ -176,7 +209,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![ensure_model, read_model_file, native_asr_start, native_asr_transcribe, selftest_file, selftest_done])
+        .invoke_handler(tauri::generate_handler![ensure_model, read_model_file, native_asr_start, native_asr_transcribe, native_rec_start, native_rec_level, native_rec_stop, selftest_file, selftest_done])
         .run(tauri::generate_context!())
         .expect("error while running Intro Coach");
 }

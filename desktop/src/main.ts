@@ -206,12 +206,14 @@ let rec: Rec | null = null;
 
 async function toggleRecording() {
   if (rec) return rec.stop();
+  if (mode === "coreml") return nativeRecording();
   // created inside the click so the platform lets it start running
   const ctx = new AudioContext();
   ctx.resume();
   let stream: MediaStream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
+    // no voice processing: it changes levels while it adapts and can restart the input after it starts
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
   } catch (e) {
     ctx.close();
     return status(`Microphone unavailable: ${(e as Error).message}`, true);
@@ -283,6 +285,56 @@ async function toggleRecording() {
   };
   rec = { stop: () => finish(true) };
   tick();
+}
+
+/** macOS: record through the native helper (AVAudioEngine, plain input). WKWebView's getUserMedia opens the Mac
+ * microphone with voice processing and restarts it a few seconds later, leaving the start of the first take far
+ * too quiet. The timer shows the audio actually captured. */
+async function nativeRecording() {
+  const { invoke } = await import("@tauri-apps/api/core");
+  try {
+    await invoke("native_rec_start");
+  } catch (e) {
+    return status(`Microphone unavailable: ${String(e)}`, true);
+  }
+  status("Starting the microphone...");
+  $("recBtn").classList.add("on"); $("recBtn").setAttribute("aria-label", "Stop recording");
+  ($("progressBar").parentElement!.querySelector(".tick") as HTMLElement).style.left = `${100 / 1.5}%`;
+  let stopped = false, live = false;
+  const opened = performance.now();
+  const poll = async () => {
+    if (stopped) return;
+    try {
+      const l = await invoke<{ live: boolean; seconds: number; rms: number }>("native_rec_level");
+      if (l.live && !live) { live = true; status(`Recording. Answer: “${SCENARIOS[scenario].prompt}”`); }
+      if (live) {
+        $("timer").textContent = fmt(l.seconds);
+        $("progressBar").style.width = Math.min(100, (l.seconds / (target * 1.5)) * 100) + "%";
+        $("progressBar").parentElement!.classList.toggle("over", l.seconds > target);
+      } else if (performance.now() - opened > 10000) {
+        rec?.stop();
+        return status("The microphone didn't send any sound. Check the input device in System Settings.", true);
+      }
+      $("meterBar").style.width = Math.max(0, Math.min(100, (20 * Math.log10(l.rms + 1e-9) + 60) * 2)) + "%";
+    } catch { /* keep polling */ }
+    setTimeout(poll, 80);
+  };
+  rec = {
+    stop: async () => {
+      stopped = true;
+      rec = null; $("recBtn").classList.remove("on"); $("recBtn").setAttribute("aria-label", "Start recording");
+      $("meterBar").style.width = "0";
+      try {
+        const bytes = await invoke<ArrayBuffer>("native_rec_stop");
+        const wav = new Float32Array(bytes);
+        if (wav.length < 16000 * 1.5) return status("That was too short. Try again.", true);
+        await submit(wavBlob(wav, 16000), undefined, wav);
+      } catch (e) {
+        status(`Couldn't finish the recording: ${String(e)}`, true);
+      }
+    },
+  };
+  poll();
 }
 
 /** 16 kHz mono samples from any rate, through the platform's resampler. */

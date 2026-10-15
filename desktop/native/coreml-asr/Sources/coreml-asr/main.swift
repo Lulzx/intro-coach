@@ -2,9 +2,18 @@
 //
 //   coreml-asr <model folder>
 //
-// Loads the four models once, prints {"ready":true} and then serves requests: each stdin line is the path of a
-// file of 16 kHz mono float32 samples; each reply is one JSON line {"pieces":[[text,start,end],...],"ms":n}
-// (subword pieces with times in seconds, the same shape as the ONNX engine) or {"error":"..."}.
+// Loads the four models once, prints {"ready":true} and then serves requests, one JSON reply line each:
+//   <path>                         transcribe a file of 16 kHz mono float32 samples
+//                                  -> {"pieces":[[text,start,end],...],"ms":n} (same shape as the ONNX engine)
+//   {"cmd":"rec_start"}            start recording from the default microphone
+//   {"cmd":"rec_level"}            -> {"live":bool,"seconds":s,"rms":r} for the timer and level meter
+//   {"cmd":"rec_stop","path":p}    stop and write the take to p as 16 kHz mono float32 -> {"samples":n}
+// Errors come back as {"error":"..."}.
+//
+// Recording goes through AVAudioEngine's plain input (no voice processing). WKWebView's getUserMedia starts the
+// Mac microphone with voice processing and restarts it a few seconds in, which left the first seconds of a take
+// some 30 dB too quiet.
+import AVFoundation
 import CoreML
 import Foundation
 
@@ -160,6 +169,93 @@ final class Engine {
     }
 }
 
+// ---------------------------------------------------------------- microphone
+
+final class Recorder {
+    private let engine = AVAudioEngine()
+    private let lock = NSLock()
+    private var samples: [Float] = []
+    private var lastRms: Float = 0
+    private var converter: AVAudioConverter?
+    private let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Double(rate), channels: 1, interleaved: false)!
+    var running = false
+
+    func start() throws {
+        if running { return }
+        lock.lock(); samples = []; samples.reserveCapacity(rate * 180); lastRms = 0; lock.unlock()
+        let input = engine.inputNode
+        let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else { throw Failure(description: "no microphone input available") }
+        converter = AVAudioConverter(from: format, to: target)
+        input.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in self?.consume(buffer) }
+        engine.prepare()
+        try engine.start()
+        running = true
+    }
+
+    private func consume(_ buffer: AVAudioPCMBuffer) {
+        guard let converter else { return }
+        let ratio = target.sampleRate / buffer.format.sampleRate
+        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio + 32)
+        guard let out = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity) else { return }
+        var fed = false
+        var error: NSError?
+        converter.convert(to: out, error: &error) { _, status in
+            if fed { status.pointee = .noDataNow; return nil }
+            fed = true
+            status.pointee = .haveData
+            return buffer
+        }
+        guard error == nil, let ch = out.floatChannelData?[0] else { return }
+        let n = Int(out.frameLength)
+        var sum: Float = 0
+        for i in 0..<n { sum += ch[i] * ch[i] }
+        lock.lock()
+        samples.append(contentsOf: UnsafeBufferPointer(start: ch, count: n))
+        lastRms = n > 0 ? (sum / Float(n)).squareRoot() : 0
+        lock.unlock()
+    }
+
+    func level() -> [String: Any] {
+        lock.lock(); defer { lock.unlock() }
+        return ["live": !samples.isEmpty, "seconds": Double(samples.count) / Double(rate), "rms": Double(lastRms)]
+    }
+
+    func stop(to path: String) throws -> Int {
+        if running {
+            engine.inputNode.removeTap(onBus: 0)
+            engine.stop()
+            running = false
+        }
+        lock.lock(); let take = samples; samples = []; lock.unlock()
+        let data = take.withUnsafeBufferPointer { Data(buffer: $0) }
+        try data.write(to: URL(fileURLWithPath: path))
+        return take.count
+    }
+}
+
+func handle(command line: String, recorder: Recorder) -> [String: Any] {
+    guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any], let cmd = obj["cmd"] as? String else {
+        return ["error": "bad command"]
+    }
+    do {
+        switch cmd {
+        case "rec_start":
+            try recorder.start()
+            return ["recording": true]
+        case "rec_level":
+            return recorder.level()
+        case "rec_stop":
+            guard let path = obj["path"] as? String else { return ["error": "rec_stop needs a path"] }
+            return ["samples": try recorder.stop(to: path)]
+        default:
+            return ["error": "unknown command \(cmd)"]
+        }
+    } catch {
+        return ["error": "\(error)"]
+    }
+}
+
 // ---------------------------------------------------------------- main
 
 guard CommandLine.arguments.count == 2 else {
@@ -177,9 +273,14 @@ do {
     emit(["error": "couldn't load the Core ML models: \(error)"]); exit(4)
 }
 
+let recorder = Recorder()
 while let line = readLine(strippingNewline: true) {
     let path = line.trimmingCharacters(in: .whitespaces)
     if path.isEmpty { continue }
+    if path.hasPrefix("{") {
+        emit(handle(command: path, recorder: recorder))
+        continue
+    }
     do {
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
         let wav: [Float] = data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
