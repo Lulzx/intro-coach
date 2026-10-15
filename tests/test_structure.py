@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from corpus import CORPUS  # noqa: E402
-from holdout import HOLDOUT  # noqa: E402
+from holdout import FRESH, HOLDOUT  # noqa: E402
 
 from intro_coach import nlp  # noqa: E402
 
@@ -25,7 +25,7 @@ def run(item):
     return {k: hits[k]["found"] is not None for k in item["expect"]}
 
 
-def report(items=CORPUS + HOLDOUT):
+def report(items=CORPUS + HOLDOUT + FRESH):
     tally = defaultdict(lambda: [0, 0])
     misses = []
     for item in items:

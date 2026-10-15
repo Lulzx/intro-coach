@@ -1,0 +1,5 @@
+node_modules/
+dist/
+public/ort/
+src-tauri/target/
+src-tauri/gen/

@@ -1,0 +1,998 @@
+{
+ "corpus": [
+  {
+   "scenario": "interview",
+   "note": "complete, textbook",
+   "text": "Hi, I'm Maria Lopez. I'm a backend engineer at a payments company. I've spent seven years building APIs for banks. Last year I cut our checkout latency by 35 percent. I'm looking for a team where reliability is the product.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "vague result, no number",
+   "text": "Hello, my name is Tom. I work as a project manager in construction. I have twelve years of experience across residential and commercial sites. I've worked on lots of projects with great teams. I'm excited about this role because it's a step up.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": false,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "no name",
+   "text": "So I'm a nurse practitioner at a community clinic. Before that I spent four years in the ER. I helped launch a diabetes program that now serves 300 patients. Next, I want to move into clinical leadership.",
+   "expect": {
+    "name": false,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "wishes, not results",
+   "text": "I'm Kenji. I'm a data scientist. I want to build models that help millions of people. I hope to grow into a lead role here.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": false,
+    "proof": false,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "trails off, no close",
+   "text": "I'm Aisha, a marketing lead at a fashion brand. I've been in marketing for about eight years. We doubled our email revenue to 2 million dollars in 2023. That's pretty much it.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": false
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "student, duration result",
+   "text": "Hi, I'm Liam. I'm a final-year computer science student at Leeds. Over the past two years I've interned at two fintech startups. During my internship I reduced test run time from 40 minutes to 6. I'm hoping to start my career as a software engineer on your platform team.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "career changer",
+   "text": "My name is Grace. I taught high school chemistry for ten years. Today I'm a UX researcher at a travel startup. I recently ran 25 user interviews that reshaped our onboarding. Now I'd love to bring that research rigor to your product team.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "numbers in words",
+   "text": "I'm Omar, and I run operations for a logistics firm. Over the last decade I've managed warehouses in three countries. My team cut delivery errors by half and saved about a million dollars a year. I'm looking for a bigger operations challenge.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "rambling, a trait is not a role",
+   "text": "Hey, I'm Chris. So, yeah, I've done a bit of everything really. I like solving problems and working with people. I'm a quick learner.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "experience": false,
+    "proof": false,
+    "close": false
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "team result, 'that's why' close",
+   "text": "Good morning, I'm Hannah. I lead the design system team at a large bank. For the past six years I've focused on accessibility. We shipped a component library used by forty product teams. That's why this accessibility-focused role caught my eye.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "role in present perfect continuous",
+   "text": "I'm Diego. I have been working as a mobile developer for five years. I built an app that reached 100,000 downloads. I want to keep growing in a product-minded team.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "pleasantries only",
+   "text": "Hi, I'm Sofia. Thanks for having me. I'm really excited to talk about this role today.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "experience": false,
+    "proof": false,
+    "close": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "complete",
+   "text": "Hi, I'm Sam, I'm an accountant. I help small restaurants understand their numbers. Last month one caf\u00e9 found 800 dollars in forgotten subscriptions. What brings you here?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "jargon instead of value",
+   "text": "I'm Raj. I'm a full-stack engineer working with React, Node and Postgres on microservices. It's a lot of Kubernetes these days.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": false,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "no name",
+   "text": "I'm a wedding photographer. I help couples relax in front of the camera. Right now I'm putting together a guide to planning photo timelines.",
+   "expect": {
+    "name": false,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "serves caf\u00e9s, question back",
+   "text": "Hey, I'm Lena. I run a small bakery downtown. We make sourdough for about a dozen caf\u00e9s. How about you, what do you do?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "'so they can'",
+   "text": "My name is Ben and I'm a physiotherapist. I work with runners so they can train without injuries. I'm currently writing a short e-book on knee pain.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "no hook",
+   "text": "I'm Priyanka, a recruiter. I help startups hire their first engineers.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "evasive",
+   "text": "Hi! I'm Jo. Oh, I do a bit of this and that, mostly freelance stuff. Anyway, nice to meet you.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "value": false,
+    "hook": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "advises, curious question",
+   "text": "I'm Mark. I'm a consultant. I advise hospitals on cutting their energy bills. These days I'm curious how AI can help with that, are you working on anything similar?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "who she serves, not 'help'",
+   "text": "I'm Ana, I teach Spanish online. Most of my students are busy professionals who travel for work. I'm building a course for people learning on their commute. Do you speak any other languages?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "founder, 'we help'",
+   "text": "Hi, I'm Tariq, founder of Loopy. We help gyms keep members from cancelling. We're launching a referral feature next month. Have you tried anything like that?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "title fragment only",
+   "text": "I'm Erin. Senior product manager.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": false,
+    "hook": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "'make X less painful for'",
+   "text": "Hi, I'm Wei. I'm a product designer at a travel startup. I make booking flights less painful for families. What about you?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "complete",
+   "text": "Hi everyone, I'm Jordan. I just joined the data team as an analyst. This quarter I'm focused on our churn dashboard. If you need numbers on customers, ping me.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "no current work",
+   "text": "Hey all, I'm Nina, I'm the new office manager. Come find me if you need keys or a desk.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": false,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "'from finance' as the role",
+   "text": "I'm Felix from finance.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": false,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "human detail instead of contact",
+   "text": "Hi, I'm Rosa. I'm a QA engineer on the payments squad. Right now I'm automating our regression tests. Outside of work I play in a jazz band.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "'X here', happy to help",
+   "text": "Morning! Ahmed here, backend developer on the search team. I'm working on making search faster this sprint. Happy to help if anyone's stuck with Elasticsearch.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "no name, routine not current focus",
+   "text": "I'm on the support team and I handle enterprise customers. Feel free to reach out with any customer questions.",
+   "expect": {
+    "name": false,
+    "role": true,
+    "current_work": false,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "'we're rebuilding', ask me",
+   "text": "Hello, my name is Olivia and I lead the mobile team. We're rebuilding the Android app this quarter. Ask me anything about the release schedule.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "too vague",
+   "text": "Hi, I'm Ben. I do stuff with computers. Yeah.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "current_work": false,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "idiom: door always open",
+   "text": "I'm Chloe, product manager for onboarding. Currently I'm running user interviews with new signups. My door is always open.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "future progressive",
+   "text": "Hi everyone, I'm Sam, I'm the summer intern on the design team. I'll be working on icons for the next ten weeks. Don't hesitate to message me on Slack.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "moved teams, still learning",
+   "text": "Hey, I'm Marcus and I recently moved over from sales to customer success. I'm learning the product as fast as I can. Ping me if a customer is unhappy.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "terse, 'send it my way'",
+   "text": "Hi, Ines, legal counsel. I review all our vendor contracts. If you're signing anything with a supplier, send it my way.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": false,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "complete",
+   "text": "I'm Priya, I run customer support at a software company. Last year we cut our average reply time from 24 hours to under one. If you've ever kept a customer waiting, this one's for you. Today I'll show you the three changes that made the difference.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no audience link, no preview",
+   "text": "Hi, I'm Dr. Ellen Park, a cardiologist at Mercy Hospital. I've treated heart patients for over 15 years. Heart disease is still the number one killer of women.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": false,
+    "preview": false
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no credibility",
+   "text": "Hello everyone, I'm Josh. If you've ever struggled to stick to a budget, you're not alone. In the next twenty minutes, I'll walk you through a simple system that works.",
+   "expect": {
+    "name": true,
+    "credibility": false,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "podcast guest, 'let's talk'",
+   "text": "Thanks for having me. I'm Lucia, and I write about climate for a living. My last book sold 50,000 copies. Your listeners probably feel overwhelmed by climate news. Let's talk about what actually helps.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no name, question to audience",
+   "text": "So, quick background: I spent nine years at Google working on Maps. Have you ever wondered how your phone knows traffic before you do? That's what we're going to unpack today.",
+   "expect": {
+    "name": false,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "nervous, 'get started' is not a preview",
+   "text": "Hi, I'm Tom. I'm really nervous. Let's just get started I guess.",
+   "expect": {
+    "name": true,
+    "credibility": false,
+    "audience": false,
+    "preview": false
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "scale as credibility",
+   "text": "I'm Amara, head of engineering at Stripe. We process billions of dollars every day, so downtime is not an option. Whether you run a startup or a big team, you'll recognize these problems. I'm going to share the five habits that keep us online.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "inclusive 'all of us', 'I want to talk about'",
+   "text": "I'm Noah, a teacher for twenty years. All of us remember a teacher who changed our lives. Today I want to talk about how to be that person.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "'X here', built companies",
+   "text": "Hey folks, Sara here. I've built three companies and sold two of them. If you're thinking about starting something, this talk is for you. We'll cover hiring, funding, and when to quit.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "credibility from the role",
+   "text": "Good evening, I'm Captain Mike Ross, an airline pilot with Delta. Flying has taught me a lot about checklists. You might think checklists are boring. By the end of this talk, you'll see why they save lives.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no audience link",
+   "text": "I'm Hiro. I founded a ramen chain with 40 locations. Today we'll go through how we grew it.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": false,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "name only",
+   "text": "My name is Kate and I'm happy to be here. Thank you.",
+   "expect": {
+    "name": true,
+    "credibility": false,
+    "audience": false,
+    "preview": false
+   }
+  }
+ ],
+ "holdout": [
+  {
+   "scenario": "interview",
+   "note": "sales, quota",
+   "text": "Hello, I'm Fatima. I'm an account executive selling software to hospitals. I've been in sales for nine years. Last quarter I closed 140 percent of my quota. I'd love to bring that energy to your enterprise team.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "chef, no numbers",
+   "text": "I'm Luca, a sous chef at an Italian restaurant in Boston. I trained in Florence and Milan. I run the kitchen on busy weekend nights. My goal is to open my own place one day.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": false,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "manager, money saved, no close",
+   "text": "My name is Victor. I manage IT for a school district. In the past three years we moved 40 schools to the cloud and saved 200,000 dollars.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": false
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "nervous, no structure",
+   "text": "Um, hi. So I guess I should talk about myself. I'm pretty hardworking and I like learning new things.",
+   "expect": {
+    "name": false,
+    "role": false,
+    "experience": false,
+    "proof": false,
+    "close": false
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "researcher, publication count",
+   "text": "Hi, I'm Dr. Mei Chen. I'm a postdoctoral researcher in neuroscience. I've published 12 papers on memory over the last five years. Next I want to lead my own lab.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "support agent, rating",
+   "text": "I'm Kwame, and I work in customer support for an airline. I've handled over 20,000 calls with a 98 percent satisfaction rating. I'm applying because I want to move into training new agents.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": false,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "real estate",
+   "text": "Hi, I'm Dana. I'm a real estate agent. I help first-time buyers find homes they can actually afford. Are you looking at all, or just browsing?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "developer, no value",
+   "text": "I'm Igor. I'm a developer. I mostly write Go.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": false,
+    "hook": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "nonprofit, 'we give'",
+   "text": "Nice to meet you, I'm Bea. I run a nonprofit that gives laptops to kids in rural schools. Lately I've been looking for corporate partners.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "no name, question",
+   "text": "I'm a career coach. I help mid-career people switch into tech without starting over. What do you do?",
+   "expect": {
+    "name": false,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "artist",
+   "text": "Hey, I'm Tom\u00e1s, I'm an illustrator. I draw children's books, mostly for small publishers. I'm working on my first graphic novel right now.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "only name",
+   "text": "Hi, I'm Zoe. Great event, right?",
+   "expect": {
+    "name": true,
+    "role": false,
+    "value": false,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "new hire, ask me",
+   "text": "Hi team, I'm Priya. I just started as a backend engineer on billing. This month I'm getting to know the codebase. Ask me anything about Rust.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "manager, no current work",
+   "text": "Hello everyone, I'm Greg, the new head of sales for Europe. Please reach out if you want to shadow a client call.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": false,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "hobby detail",
+   "text": "I'm Yuki, data engineer. I'm migrating our pipelines to Airflow. On weekends I bake way too much bread.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "no role",
+   "text": "Hey, I'm Owen. Excited to be here. Looking forward to working with you all.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "current_work": false,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "designer, slack",
+   "text": "Hi all, I'm Nadia and I'm the designer on the checkout squad. We're redesigning the cart page right now. You can always find me on Slack.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "contractor",
+   "text": "Good morning. I'm Paul, I'm a contractor helping with the security audit. I'll be here for six weeks.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "doctor, audience question",
+   "text": "I'm Dr. Ravi Shah, an emergency physician. I've seen thousands of sports injuries. How many of you run at least once a week? Today I'll explain the three mistakes that hurt runners most.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no preview",
+   "text": "Hi, I'm Jen. I've coached high school debate for fifteen years. If you've ever frozen in front of a crowd, you know the feeling.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": false
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "podcast, 'we're going to dig into'",
+   "text": "Thanks for having me, I'm Carlos. I founded two food delivery startups. We're going to dig into why most of them fail.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": false,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no credibility, no name",
+   "text": "Good afternoon. Have you ever felt like your inbox runs your life? In this talk, I'll share a simple email routine.",
+   "expect": {
+    "name": false,
+    "credibility": false,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "engineer, outage",
+   "text": "I'm Helga, a site reliability engineer at a bank. Last year we cut our outages by 60 percent. If you're on call, this one is for you. I'm going to walk you through our playbook.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "name only, filler",
+   "text": "Hello, my name is Ivan. Okay, so, yeah, let's begin.",
+   "expect": {
+    "name": true,
+    "credibility": false,
+    "audience": false,
+    "preview": false
+   }
+  }
+ ],
+ "fresh": [
+  {
+   "scenario": "interview",
+   "note": "teacher to L&D",
+   "text": "Good afternoon, I'm Rachel. I'm a learning designer at an insurance company. I taught middle school math for eight years before that. My onboarding course cut new hire ramp-up from six weeks to three. I'm looking for a role where I can design learning at a bigger scale.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "no proof, no close",
+   "text": "Hi, my name is Ade. I'm a civil engineer. I've worked on bridges and roads for about six years.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "experience": true,
+    "proof": false,
+    "close": false
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "no role stated",
+   "text": "Hello, I'm Sven. I've always loved building things. Over the past four years I shipped three mobile games with over a million downloads. I'd love to bring that to your studio.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "experience": true,
+    "proof": true,
+    "close": true
+   }
+  },
+  {
+   "scenario": "interview",
+   "note": "rambling",
+   "text": "So, yeah, I guess I'm kind of a generalist. I've done stuff in a lot of areas. I'm a hard worker.",
+   "expect": {
+    "name": false,
+    "role": false,
+    "experience": false,
+    "proof": false,
+    "close": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "vet",
+   "text": "Hi, I'm Noor, I'm a vet. I help dog owners keep their older dogs active. What do you do?",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "no value",
+   "text": "I'm Pete. I'm in software. Nice event.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "value": false,
+    "hook": false
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "architect, current project",
+   "text": "Hey, I'm In\u00e9s, an architect. I design homes for families who want to live greener. At the moment I'm working on a straw-bale house.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "networking",
+   "note": "no name",
+   "text": "I run a bike repair shop. We fix commuter bikes the same day so people aren't stuck. Do you cycle?",
+   "expect": {
+    "name": false,
+    "role": true,
+    "value": true,
+    "hook": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "complete",
+   "text": "Hi all, I'm Leo, the new QA lead. Right now I'm setting up our test plan for the checkout launch. If something breaks, tell me first.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "no reach",
+   "text": "Hello, I'm Mina from marketing. This week I'm planning the spring campaign.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "just name",
+   "text": "Hi, I'm Josh. Glad to be here.",
+   "expect": {
+    "name": true,
+    "role": false,
+    "current_work": false,
+    "reach": false
+   }
+  },
+  {
+   "scenario": "meeting",
+   "note": "human detail",
+   "text": "I'm Carla, analyst on the risk team. I'm rebuilding our fraud model this quarter. Fun fact, I used to be a pastry chef.",
+   "expect": {
+    "name": true,
+    "role": true,
+    "current_work": true,
+    "reach": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "complete",
+   "text": "I'm Dr. Omar Haddad, a sleep researcher. I've studied sleep in over 5,000 shift workers. If you've ever worked a night shift, you know the fog. Tonight I'll show you how to clear it.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": true,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no audience",
+   "text": "Hi, I'm Grace. I lead the design team at a bank. We'll look at three redesigns today.",
+   "expect": {
+    "name": true,
+    "credibility": true,
+    "audience": false,
+    "preview": true
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "no preview, no credibility",
+   "text": "Hello, I'm Tim. Have you ever lost your keys? It happens to all of us.",
+   "expect": {
+    "name": true,
+    "credibility": false,
+    "audience": true,
+    "preview": false
+   }
+  },
+  {
+   "scenario": "talk",
+   "note": "podcast, no name",
+   "text": "Thanks for having me on. I've spent twenty years teaching kids to code. Let's talk about why most coding classes fail.",
+   "expect": {
+    "name": false,
+    "credibility": true,
+    "audience": false,
+    "preview": true
+   }
+  }
+ ]
+}

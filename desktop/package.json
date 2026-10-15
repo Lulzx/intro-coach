@@ -1,0 +1,47 @@
+{
+  "name": "intro-coach-desktop",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "tsx --test test/*.test.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc",
+    "tauri": "tauri"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.81",
+    "@ai-sdk/cerebras": "^3.0.70",
+    "@ai-sdk/cohere": "^4.0.62",
+    "@ai-sdk/deepinfra": "^3.0.70",
+    "@ai-sdk/deepseek": "^3.0.66",
+    "@ai-sdk/google": "^4.0.97",
+    "@ai-sdk/groq": "^4.0.62",
+    "@ai-sdk/mistral": "^4.0.65",
+    "@ai-sdk/openai": "^4.0.95",
+    "@ai-sdk/openai-compatible": "^3.0.70",
+    "@ai-sdk/perplexity": "^5.0.13",
+    "@ai-sdk/xai": "^5.0.23",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-http": "^2.8.3",
+    "ai": "^7.0.142",
+    "compromise": "^14.18.0",
+    "onnxruntime-web": "^1.30.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.3",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

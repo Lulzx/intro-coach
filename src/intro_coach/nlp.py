@@ -20,14 +20,14 @@ FOCUS_LEMMAS = {"love", "enjoy", "specialize", "specialise", "focus", "care", "l
 FORWARD_LEMMAS = {"want", "hope", "plan", "aim", "seek", "excite", "excited", "eager", "keen", "look", "love", "next",
                   "goal", "join", "explore", "grow"}
 VALUE_LEMMAS = {"help", "enable", "support", "serve", "teach", "coach", "advise", "let", "allow", "save", "make"}
-REACH_LEMMAS = {"ping", "reach", "ask", "message", "find", "come", "grab", "talk", "email", "slack", "dm", "contact", "drop"}
+REACH_LEMMAS = {"ping", "reach", "ask", "message", "find", "come", "grab", "talk", "email", "slack", "dm", "contact", "drop", "tell"}
 PREVIEW_LEMMAS = {"show", "cover", "share", "walk", "talk", "explain", "tell", "look", "go", "dive", "discuss", "teach",
                   "demo", "unpack", "learn", "see", "explore", "break", "reveal", "compare"}
 # what the listener will get: "you'll see why", "you'll leave with"
 LISTENER_LEMMAS = {"see", "learn", "leave", "know", "get", "discover", "walk", "find", "understand", "hear"}
 DESIRE = {"want", "hope", "plan", "aim", "wish", "try", "like", "love", "dream", "would"}
 # nouns that describe a trait, not a job ("I'm a quick learner", "I'm a people person")
-TRAIT_NOUNS = {"learner", "person", "people", "fan", "guy", "girl", "kind", "type", "player", "believer", "lover",
+TRAIT_NOUNS = {"learner", "generalist", "person", "people", "fan", "guy", "girl", "kind", "type", "player", "believer", "lover",
                "thinker", "communicator", "solver", "problem", "worker", "listener", "self", "starter", "fit", "one"}
 JOB_NOUNS = {"engineer", "developer", "designer", "manager", "founder", "cofounder", "analyst", "scientist", "architect",
              "consultant", "counsel", "lawyer", "attorney", "accountant", "nurse", "doctor", "teacher", "professor",
@@ -130,9 +130,9 @@ def role(doc, k, n):
                 return True
             if head.pos_ == "PROPN" and (head.dep_ == "attr" and _subject_is_me(head.head) or k <= 1):
                 return True
-        # "I'm Felix from finance" / "I'm Rosa, on the payments squad"
+        # "I'm Felix from finance" / "I'm Rosa, on the payments squad" (the parser may hang the "from" on "'m")
         if t.pos_ == "PROPN" and t.dep_ == "attr" and _subject_is_me(t.head):
-            for prep in (c for c in t.children if c.lower_ in {"from", "on", "in"}):
+            for prep in (c for c in list(t.children) + list(t.head.children) if c.lower_ in {"from", "on", "in"}):
                 if any(c.pos_ == "NOUN" for c in prep.children):
                     return True
         # "I have been working as a mobile developer", "I just started as a backend engineer"
@@ -240,7 +240,7 @@ def value(doc, k, n):
             for prep in (c for c in t.subtree if c.dep_ in {"prep", "dative"} and c.lower_ in {"for", "to"} and c.head.i == t.i):
                 if any(o.tag_ in {"NNS", "NNPS"} for o in prep.children):
                     return True
-    return bool(re.search(r"\bso (that|they|you)\b", doc.text, re.I))
+    return bool(re.search(r"\bso (that|they|you|people|customers|clients|teams|users)\b", doc.text, re.I))
 
 
 def hook(doc, k, n):

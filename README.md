@@ -30,7 +30,30 @@ Everything runs locally. The optional AI review sends the transcript and scores,
 
 ![Insights](docs/insights.png)
 
-## Install
+## Desktop app (macOS, Windows)
+
+Download the installer from [Releases](https://github.com/Lulzx/intro-coach/releases). The desktop app is a
+TypeScript port in [`desktop/`](desktop) running everything inside the app: speech recognition with
+onnxruntime-web, a Praat-style pitch tracker, and structure checks with compromise.js (verified against the same
+88 labelled intros as the Python version). The AI review works with any provider and model from
+[models.dev](https://models.dev) through the [AI SDK](https://ai-sdk.dev), the same building blocks as opencode;
+add a key under Settings.
+
+The first launch downloads the speech model (290 MB). macOS builds aren't notarized yet: right-click the app and
+choose Open the first time.
+
+Build it yourself (needs Node and Rust):
+
+```sh
+cd desktop
+npm install
+npm run tauri dev      # or: npm run tauri build
+npm test               # structure checks against the labelled intros
+```
+
+Releases are built by `.github/workflows/release.yml` when a `v*` tag is pushed.
+
+## Install (Python)
 
 Needs Python 3.12+, [uv](https://docs.astral.sh/uv/) and ffmpeg.
 
@@ -80,7 +103,7 @@ uv run pytest tests
 uv run python tests/test_structure.py   # per-check accuracy
 ```
 
-`tests/corpus.py` and `tests/holdout.py` hold 72 labelled intros for the structure checks.
+`tests/corpus.py` and `tests/holdout.py` hold 88 labelled intros for the structure checks.
 
 ## Credits
 

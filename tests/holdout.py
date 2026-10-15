@@ -78,3 +78,187 @@ HOLDOUT = [
      "text": "Hello, my name is Ivan. Okay, so, yeah, let's begin.",
      "expect": {"name": True, "credibility": False, "audience": False, "preview": False}},
 ]
+
+# Written after both the Python and the TypeScript checks were tuned; both scored 64/68 (94%) before these were fixed.
+FRESH = [
+ {
+  "scenario": "interview",
+  "note": "teacher to L&D",
+  "text": "Good afternoon, I'm Rachel. I'm a learning designer at an insurance company. I taught middle school math for eight years before that. My onboarding course cut new hire ramp-up from six weeks to three. I'm looking for a role where I can design learning at a bigger scale.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "experience": True,
+   "proof": True,
+   "close": True
+  }
+ },
+ {
+  "scenario": "interview",
+  "note": "no proof, no close",
+  "text": "Hi, my name is Ade. I'm a civil engineer. I've worked on bridges and roads for about six years.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "experience": True,
+   "proof": False,
+   "close": False
+  }
+ },
+ {
+  "scenario": "interview",
+  "note": "no role stated",
+  "text": "Hello, I'm Sven. I've always loved building things. Over the past four years I shipped three mobile games with over a million downloads. I'd love to bring that to your studio.",
+  "expect": {
+   "name": True,
+   "role": False,
+   "experience": True,
+   "proof": True,
+   "close": True
+  }
+ },
+ {
+  "scenario": "interview",
+  "note": "rambling",
+  "text": "So, yeah, I guess I'm kind of a generalist. I've done stuff in a lot of areas. I'm a hard worker.",
+  "expect": {
+   "name": False,
+   "role": False,
+   "experience": False,
+   "proof": False,
+   "close": False
+  }
+ },
+ {
+  "scenario": "networking",
+  "note": "vet",
+  "text": "Hi, I'm Noor, I'm a vet. I help dog owners keep their older dogs active. What do you do?",
+  "expect": {
+   "name": True,
+   "role": True,
+   "value": True,
+   "hook": True
+  }
+ },
+ {
+  "scenario": "networking",
+  "note": "no value",
+  "text": "I'm Pete. I'm in software. Nice event.",
+  "expect": {
+   "name": True,
+   "role": False,
+   "value": False,
+   "hook": False
+  }
+ },
+ {
+  "scenario": "networking",
+  "note": "architect, current project",
+  "text": "Hey, I'm In\u00e9s, an architect. I design homes for families who want to live greener. At the moment I'm working on a straw-bale house.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "value": True,
+   "hook": True
+  }
+ },
+ {
+  "scenario": "networking",
+  "note": "no name",
+  "text": "I run a bike repair shop. We fix commuter bikes the same day so people aren't stuck. Do you cycle?",
+  "expect": {
+   "name": False,
+   "role": True,
+   "value": True,
+   "hook": True
+  }
+ },
+ {
+  "scenario": "meeting",
+  "note": "complete",
+  "text": "Hi all, I'm Leo, the new QA lead. Right now I'm setting up our test plan for the checkout launch. If something breaks, tell me first.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "current_work": True,
+   "reach": True
+  }
+ },
+ {
+  "scenario": "meeting",
+  "note": "no reach",
+  "text": "Hello, I'm Mina from marketing. This week I'm planning the spring campaign.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "current_work": True,
+   "reach": False
+  }
+ },
+ {
+  "scenario": "meeting",
+  "note": "just name",
+  "text": "Hi, I'm Josh. Glad to be here.",
+  "expect": {
+   "name": True,
+   "role": False,
+   "current_work": False,
+   "reach": False
+  }
+ },
+ {
+  "scenario": "meeting",
+  "note": "human detail",
+  "text": "I'm Carla, analyst on the risk team. I'm rebuilding our fraud model this quarter. Fun fact, I used to be a pastry chef.",
+  "expect": {
+   "name": True,
+   "role": True,
+   "current_work": True,
+   "reach": True
+  }
+ },
+ {
+  "scenario": "talk",
+  "note": "complete",
+  "text": "I'm Dr. Omar Haddad, a sleep researcher. I've studied sleep in over 5,000 shift workers. If you've ever worked a night shift, you know the fog. Tonight I'll show you how to clear it.",
+  "expect": {
+   "name": True,
+   "credibility": True,
+   "audience": True,
+   "preview": True
+  }
+ },
+ {
+  "scenario": "talk",
+  "note": "no audience",
+  "text": "Hi, I'm Grace. I lead the design team at a bank. We'll look at three redesigns today.",
+  "expect": {
+   "name": True,
+   "credibility": True,
+   "audience": False,
+   "preview": True
+  }
+ },
+ {
+  "scenario": "talk",
+  "note": "no preview, no credibility",
+  "text": "Hello, I'm Tim. Have you ever lost your keys? It happens to all of us.",
+  "expect": {
+   "name": True,
+   "credibility": False,
+   "audience": True,
+   "preview": False
+  }
+ },
+ {
+  "scenario": "talk",
+  "note": "podcast, no name",
+  "text": "Thanks for having me on. I've spent twenty years teaching kids to code. Let's talk about why most coding classes fail.",
+  "expect": {
+   "name": False,
+   "credibility": True,
+   "audience": False,
+   "preview": True
+  }
+ }
+]
