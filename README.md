@@ -30,7 +30,7 @@ Everything runs locally. The optional AI review sends the transcript and scores,
 
 ![Insights](docs/insights.png)
 
-## Desktop app (macOS, Windows)
+## Desktop app (macOS, Windows, Linux)
 
 Download the installer from [Releases](https://github.com/Lulzx/intro-coach/releases). The desktop app is a
 TypeScript port in [`desktop/`](desktop) running everything inside the app: speech recognition with
@@ -42,7 +42,7 @@ add a key under Settings.
 On macOS 15+ the app runs the Core ML build of the speech model on the Neural Engine (a 2-minute take transcribes
 in about half a second) through a small Swift helper in `desktop/native/coreml-asr`; elsewhere it uses the ONNX
 build in WebAssembly. The first launch downloads the model (about 250-290 MB). macOS builds aren't notarized yet:
-right-click the app and choose Open the first time.
+right-click the app and choose Open the first time. On Linux, download the AppImage (make it executable first) or the `.deb` / `.rpm` package.
 
 Build it yourself (needs Node and Rust):
 
